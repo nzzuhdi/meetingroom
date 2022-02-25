@@ -39,8 +39,7 @@ function Register() {
         Swal.fire({
           icon: "error",
           title: error.response.data.message,
-          showConfirmButton: false,
-          timer: 1500,
+          showConfirmButton: true,
         });
         console.log(error.response.data);
       });

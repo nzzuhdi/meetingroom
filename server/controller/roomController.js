@@ -25,7 +25,9 @@ class roomController {
       if (result) {
         res.status(200).json(result);
       }
-    } catch (error) {}
+    } catch (error) {
+      next(error);
+    }
   }
 
   static async addRoom(req, res, next) {
@@ -41,7 +43,9 @@ class roomController {
           data: { roomName, costPerHour },
         });
       }
-    } catch (error) {}
+    } catch (error) {
+      next(error);
+    }
   }
   static async getRoom(req, res, next) {
     try {
