@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Room.hasMany(models.RoomUsage);
+      Room.hasMany(models.RoomUsage, { foreignKey: "clientId" });
     }
   }
   Room.init(
