@@ -9,7 +9,6 @@ function ModalRoom(props) {
   const { clients, roomId } = props.data;
   const [inputs, setInputs] = useState({ roomId });
   const [show, setShow] = useState(false);
-
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
@@ -42,6 +41,7 @@ function ModalRoom(props) {
           timer: 1500,
         });
         setInputs({ roomId });
+        window.location.reload();
       })
       .catch((error) => {
         Swal.fire({
