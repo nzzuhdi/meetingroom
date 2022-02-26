@@ -1,5 +1,5 @@
-const { Client, Room, RoomUsage } = require("../models");
-
+const { Client, Room, RoomUsage, sequelize, Sequelize } = require("../models");
+const { Op } = require("sequelize");
 class roomController {
   static async addClient(req, res, next) {
     try {
@@ -82,8 +82,12 @@ class roomController {
 
   static async addRoomUsage(req, res, next) {
     try {
+      console.log("masuk");
+
+      console.log(req.body, "masuk");
       const { clientId, roomId, startTime, endTime, bookingDate, quotaUsed } =
         req.body;
+      const date = new Date(bookingDate).toISOString().split("T")[0];
       const addRoomUsafe = await RoomUsage.create({
         clientId,
         roomId,
@@ -106,6 +110,7 @@ class roomController {
         });
       }
     } catch (error) {
+      console.log(error);
       next(error);
     }
   }

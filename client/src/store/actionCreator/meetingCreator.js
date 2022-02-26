@@ -70,3 +70,24 @@ export function fetchRooms() {
       });
   };
 }
+
+export function fetchRoomsUsages() {
+  return function (dispatch, getState) {
+    // dispatch(itemsLoading());
+    axios({
+      method: "GET",
+      url: "roomusages",
+      headers: {
+        access_token: localStorage.access_token,
+      },
+    })
+      .then(({ data }) => {
+        console.log(data, "ROOMs");
+        dispatch(setRoomUsage(data));
+      })
+
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+}

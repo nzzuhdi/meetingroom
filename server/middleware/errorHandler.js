@@ -11,6 +11,8 @@ const errorHandler = async (err, req, res, next) => {
     res.status(401).json({ message: "Insert Password" });
   } else if (err.name === "CannotLogin") {
     res.status(401).json({ message: "Email or Password is incorrect!" });
+  } else if (err.name === "wrongSchedule") {
+    res.status(401).json({ message: "Chose another date and time!" });
   } else if (err.name === "Unauthorized" || err.name === "JsonWebTokenError") {
     res
       .status(401)

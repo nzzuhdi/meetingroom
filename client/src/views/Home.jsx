@@ -5,18 +5,20 @@ import {
   fetchRooms,
   setIsLogin,
   fetchClients,
+  fetchRoomsUsages,
 } from "../store/actionCreator/meetingCreator";
 import ModalRoom from "../components/ModalRoom";
+import ModalSchedule from "../components/ModalSchedule";
 import { Form, FloatingLabel } from "react-bootstrap";
 function Home() {
   const dispatch = useDispatch();
-  const { rooms, isLogin, clients } = useSelector(
+  const { rooms, isLogin, clients, roomUsages } = useSelector(
     (state) => state.meetingReducer
   );
   useEffect(() => {
     dispatch(fetchRooms());
     dispatch(fetchClients());
-
+    dispatch(fetchRoomsUsages());
     dispatch(setIsLogin(true));
   }, []);
   console.log(rooms);
@@ -33,6 +35,7 @@ function Home() {
               <th scope="col">Room</th>
               <th scope="col">Cost per Hour</th>
               <th scope="col">Action</th>
+              <th scope="col">Schedule</th>
             </tr>
           </thead>
           <tbody>
@@ -44,6 +47,9 @@ function Home() {
                   <td>{room.costPerHour}</td>
                   <td>
                     <ModalRoom data={{ clients: clients, roomId: room.id }} />
+                  </td>
+                  <td>
+                    <ModalSchedule roomId={room.id} />
                   </td>
                 </tr>
               );
