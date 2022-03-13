@@ -12,7 +12,7 @@ app.use(cors());
 app.use(routes);
 
 app.listen(port, () => {
-  console.log(`listenixtzgianzaaggklam ${port}`);
+  console.log(`listenixatzgianzaaggklam ${port}`);
 });
 
 module.exports = app;
