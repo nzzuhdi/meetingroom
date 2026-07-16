@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
 import {
   fetchRooms,
   setIsLogin,
@@ -9,54 +8,63 @@ import {
 } from "../store/actionCreator/meetingCreator";
 import ModalRoom from "../components/ModalRoom";
 import ModalSchedule from "../components/ModalSchedule";
-import { Form, FloatingLabel } from "react-bootstrap";
+import AddRoomForm from "../components/AddRoomForm";
+
 function Home() {
   const dispatch = useDispatch();
-  const { rooms, isLogin, clients, roomUsages } = useSelector(
-    (state) => state.meetingReducer
-  );
+  const { rooms, clients } = useSelector((state) => state.meetingReducer);
+  const [showAddRoom, setShowAddRoom] = useState(false);
+
   useEffect(() => {
     dispatch(fetchRooms());
     dispatch(fetchClients());
     dispatch(fetchRoomsUsages());
     dispatch(setIsLogin(true));
-  }, []);
-  console.log(rooms);
+  }, [dispatch]);
+
   return (
-    <div className="container-md">
-      <div className="d-flex flex-row bd-highlight ">
-        <h2 style={{ marginTop: "30px" }}>BOOKING OUR ROOM HERE</h2>
+    <div className="main-content">
+      <div className="page-header">
+        <h2>Meeting Rooms</h2>
+        <button className="btn-add" onClick={() => setShowAddRoom(!showAddRoom)}>
+          {showAddRoom ? "Cancel" : "+ Add Room"}
+        </button>
       </div>
-      <div className="table-responsive-sm">
-        <table className="table table-light table-striped table-hover">
-          <thead className="table-dark">
-            <tr>
-              <th scope="col">No</th>
-              <th scope="col">Room</th>
-              <th scope="col">Cost per Hour</th>
-              <th scope="col">Action</th>
-              <th scope="col">Schedule</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rooms.map((room, index) => {
-              return (
-                <tr key={index}>
-                  <th scope="row">{index + 1}</th>
-                  <td>{room.roomName}</td>
-                  <td>{room.costPerHour}</td>
-                  <td>
-                    <ModalRoom data={{ clients: clients, roomId: room.id }} />
-                  </td>
-                  <td>
-                    <ModalSchedule roomId={room.id} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+
+      {showAddRoom && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <AddRoomForm onSuccess={() => {
+            setShowAddRoom(false);
+            dispatch(fetchRooms());
+          }} />
+        </div>
+      )}
+
+      {rooms.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">🏢</div>
+          <h4>No rooms yet</h4>
+          <p>Click "Add Room" to create your first meeting room.</p>
+        </div>
+      ) : (
+        <div className="card-grid">
+          {rooms.map((room) => (
+            <div className="room-card" key={room.id}>
+              <div className="room-card-header">
+                <div className="room-card-title">{room.roomName}</div>
+                <div className="room-card-badge">Room #{room.id}</div>
+              </div>
+              <div className="room-card-cost">
+                ${room.costPerHour} <span>/ hour</span>
+              </div>
+              <div className="room-card-actions">
+                <ModalRoom data={{ clients, roomId: room.id }} />
+                <ModalSchedule roomId={room.id} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

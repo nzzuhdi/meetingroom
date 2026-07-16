@@ -1,60 +1,47 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { setIsLogin } from "../store/actionCreator/meetingCreator";
 import axios from "../helper/axios";
 import Swal from "sweetalert2";
+
 function Login() {
-  const { isLogin } = useSelector((state) => state.meetingReducer);
-  console.log(isLogin);
   const dispatch = useDispatch();
   const [inputs, setInputs] = useState({});
-  const [isSubmit, setIsubmit] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (event) => {
-    const name = event.target.name;
-    console.log(name);
-    const value = event.target.value;
-    console.log(value);
-
-    setInputs((values) => ({ ...values, [name]: value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setInputs((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    return axios({
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    axios({
       method: "POST",
-      url: `login`,
+      url: "login",
       data: inputs,
     })
       .then(({ data }) => {
-        console.log(data);
         localStorage.setItem("access_token", data.access_token);
-        Swal.fire({
-          icon: "success",
-          title: `Success Login`,
-          showConfirmButton: false,
-          timer: 1500,
-        });
+        dispatch(setIsLogin(true));
+        Swal.fire({ icon: "success", title: "Welcome back!", timer: 1500, showConfirmButton: false });
         navigate("/");
       })
       .catch((error) => {
-        Swal.fire({
-          icon: "error",
-          title: error.response.data.message,
-          showConfirmButton: false,
-          timer: 1500,
-        });
-        console.log(error);
-      });
+        const msg = error.response?.data?.message || "Login failed";
+        Swal.fire({ icon: "error", title: msg, showConfirmButton: true });
+      })
+      .finally(() => setLoading(false));
   };
+
   return (
     <div className="auth-wrapper">
       <div className="auth-inner">
+        <h3>Sign In</h3>
         <form onSubmit={handleSubmit}>
-          <h3>Sign In</h3>
           <div className="form-group">
             <label>Email address</label>
             <input
@@ -77,10 +64,13 @@ function Login() {
               onChange={handleChange}
             />
           </div>
-          <button type="submit" className="btn btn-primary btn-block">
-            Submit
+          <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+        <p className="forgot-password">
+          Don't have an account? <Link to="/register">Register here</Link>
+        </p>
       </div>
     </div>
   );

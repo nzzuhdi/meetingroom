@@ -1,173 +1,124 @@
-import React from "react";
-import { Button, Modal, Form, FloatingLabel } from "react-bootstrap";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Modal, Form, FloatingLabel } from "react-bootstrap";
+import { useDispatch } from "react-redux";
+import { fetchRoomsUsages } from "../store/actionCreator/meetingCreator";
 import Swal from "sweetalert2";
 import axios from "../helper/axios";
-function ModalRoom(props) {
-  const { clients, roomId } = props.data;
+
+function ModalRoom({ data }) {
+  const { clients, roomId } = data;
+  const dispatch = useDispatch();
   const [inputs, setInputs] = useState({ roomId });
   const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  const handleChange = (event) => {
-    const name = event.target.name;
-    // console.log(name);
-    const value = event.target.value;
-    // console.log(value);
-
-    setInputs((values) => ({ ...values, [name]: value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setInputs((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log(inputs);
-    return axios({
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!inputs.clientId || !inputs.startTime || !inputs.endTime || !inputs.bookingDate) {
+      Swal.fire({ icon: "warning", title: "Please fill all fields", timer: 1500, showConfirmButton: false });
+      return;
+    }
+    setLoading(true);
+    axios({
       method: "POST",
-      url: `roomusages`,
-      data: inputs,
-      headers: {
-        access_token: localStorage.access_token,
-      },
+      url: "roomusages",
+      data: { ...inputs, quotaUsed: inputs.quotaUsed || 1 },
+      headers: { access_token: localStorage.getItem("access_token") },
     })
       .then(({ data }) => {
-        console.log(data);
-        Swal.fire({
-          icon: "success",
-          title: `Success Booking `,
-          showConfirmButton: false,
-          timer: 1500,
-        });
+        Swal.fire({ icon: "success", title: "Booking created!", timer: 1500, showConfirmButton: false });
         setInputs({ roomId });
-        window.location.reload();
+        handleClose();
+        dispatch(fetchRoomsUsages());
       })
       .catch((error) => {
-        Swal.fire({
-          icon: "error",
-          title: error.response.data.message,
-          showConfirmButton: true,
-        });
-        console.log(error.response.data);
-      });
+        const msg = error.response?.data?.message || "Booking failed";
+        Swal.fire({ icon: "error", title: msg, showConfirmButton: true });
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
-    <div>
-      <Button variant="primary" onClick={handleShow}>
-        Booking
-      </Button>
+    <>
+      <button className="btn-book" onClick={handleShow}>
+        Book
+      </button>
 
-      <Modal
-        show={show}
-        onHide={handleClose}
-        {...props}
-        size="lg"
-        aria-labelledby="contained-modal-title-vcenter"
-        centered
-      >
+      <Modal show={show} onHide={handleClose} size="lg" centered>
         <Modal.Header closeButton>
-          <Modal.Title>New Booking</Modal.Title>
+          <Modal.Title>New Booking - Room #{roomId}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
-            <FloatingLabel
-              controlId="floatingSelect"
-              label="Select Client"
-              className="mb-2"
-            >
-              <Form.Select
-                aria-label="Floating label select example"
-                name="clientId"
-                onChange={handleChange}
-              >
-                <option>--Chose--</option>
-                {clients.map((client, index) => {
-                  return (
-                    <option key={index} value={client.id}>
-                      {client.name}
-                    </option>
-                  );
-                })}
+            <FloatingLabel controlId="selectClient" label="Select Client" className="mb-3">
+              <Form.Select name="clientId" onChange={handleChange} value={inputs.clientId || ""}>
+                <option value="">-- Choose Client --</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name} ({client.email})
+                  </option>
+                ))}
               </Form.Select>
             </FloatingLabel>
-            <FloatingLabel
-              controlId="floatingInput"
-              label="Room Id"
-              className="mb-2"
-            >
-              <Form.Control
-                type="text"
-                defaultValue={roomId}
-                readOnly
-                name="roomId"
-              />
-            </FloatingLabel>
-            <FloatingLabel
-              controlId="floatingInput"
-              label="Start Time"
-              className="mb-2"
-            >
-              <Form.Control
-                type="time"
-                placeholder="24 H Format"
-                name="startTime"
-                value={inputs.name}
-                onChange={handleChange}
-              />
-            </FloatingLabel>
-            <FloatingLabel
-              controlId="floatingEndTime"
-              label="End Time"
-              className="mb-2"
-            >
-              <Form.Control
-                type="time"
-                placeholder="24H Format"
-                name="endTime"
-                onChange={handleChange}
-                value={inputs.name}
-              />
-            </FloatingLabel>
-            <FloatingLabel
-              controlId="floatingBookingDate"
-              label="Booking Date"
-              className="mb-2"
-            >
+
+            <FloatingLabel controlId="bookingDate" label="Booking Date" className="mb-3">
               <Form.Control
                 type="date"
-                placeholder="date"
                 name="bookingDate"
+                value={inputs.bookingDate || ""}
                 onChange={handleChange}
-                value={inputs.name}
               />
             </FloatingLabel>
-            <FloatingLabel
-              controlId="floatingQuota"
-              label="Quota"
-              className="mb-2"
-            >
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <FloatingLabel controlId="startTime" label="Start Time">
+                <Form.Control
+                  type="time"
+                  name="startTime"
+                  value={inputs.startTime || ""}
+                  onChange={handleChange}
+                />
+              </FloatingLabel>
+              <FloatingLabel controlId="endTime" label="End Time">
+                <Form.Control
+                  type="time"
+                  name="endTime"
+                  value={inputs.endTime || ""}
+                  onChange={handleChange}
+                />
+              </FloatingLabel>
+            </div>
+
+            <FloatingLabel controlId="quota" label="Number of People" className="mt-3">
               <Form.Control
                 type="number"
-                placeholder="Quota"
                 name="quotaUsed"
+                placeholder="1"
+                min="1"
+                value={inputs.quotaUsed || ""}
                 onChange={handleChange}
-                value={inputs.name}
               />
             </FloatingLabel>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="primary" type="submit" onClick={handleClose}>
-              Book!
-            </Button>
-            <Button variant="danger" onClick={handleClose}>
+            <button type="button" className="btn-schedule" onClick={handleClose}>
               Cancel
-            </Button>
+            </button>
+            <button type="submit" className="btn-book" disabled={loading}>
+              {loading ? "Booking..." : "Confirm Booking"}
+            </button>
           </Modal.Footer>
         </Form>
       </Modal>
-    </div>
+    </>
   );
 }
 

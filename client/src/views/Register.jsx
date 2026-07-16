@@ -1,61 +1,48 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "../helper/axios";
 import Swal from "sweetalert2";
+
 function Register() {
   const [inputs, setInputs] = useState({});
-  const [isSubmit, setIsubmit] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (event) => {
-    const name = event.target.name;
-    console.log(name);
-    const value = event.target.value;
-    console.log(value);
-
-    setInputs((values) => ({ ...values, [name]: value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setInputs((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    return axios({
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    axios({
       method: "POST",
-      url: `register`,
+      url: "register",
       data: inputs,
     })
       .then(({ data }) => {
-        console.log(data);
-        Swal.fire({
-          icon: "success",
-          title: `Success Register `,
-          showConfirmButton: false,
-          timer: 1500,
-        });
+        Swal.fire({ icon: "success", title: "Account created!", timer: 1500, showConfirmButton: false });
         navigate("/login");
       })
       .catch((error) => {
-        Swal.fire({
-          icon: "error",
-          title: error.response.data.message,
-          showConfirmButton: true,
-        });
-        console.log(error.response.data);
-      });
+        const msg = error.response?.data?.message || "Registration failed";
+        Swal.fire({ icon: "error", title: Array.isArray(msg) ? msg[0] : msg, showConfirmButton: true });
+      })
+      .finally(() => setLoading(false));
   };
+
   return (
     <div className="auth-wrapper">
       <div className="auth-inner">
+        <h3>Sign Up</h3>
         <form onSubmit={handleSubmit}>
-          <h3>Sign Up</h3>
-
           <div className="form-group">
             <label>Name</label>
             <input
               type="text"
               className="form-control"
-              placeholder="Last name"
+              placeholder="Your name"
               name="name"
               value={inputs.name || ""}
               onChange={handleChange}
@@ -83,13 +70,13 @@ function Register() {
               onChange={handleChange}
             />
           </div>
-          <button type="submit" className="btn btn-primary btn-block">
-            Sign Up
+          <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+            {loading ? "Creating account..." : "Sign Up"}
           </button>
-          <p className="forgot-password text-right">
-            Already registered <Link to={"/login"}> Login here</Link>
-          </p>
         </form>
+        <p className="forgot-password">
+          Already registered? <Link to="/login">Login here</Link>
+        </p>
       </div>
     </div>
   );
